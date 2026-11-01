@@ -1,0 +1,27 @@
+Subject: [PATCH] wifi: ath12k: warn instead of splatting on reg fallback
+
+ath12k_reg_handle_chan_list() falls back to re-sending the previous
+country setting when a regulatory channel list event cannot be
+processed, and then hits a bare WARN_ON(1).  On QCN9274 boards the
+firmware sends an empty ruleset during the boot-time regulatory update,
+so every boot produces a full kernel splat even though the fallback
+does its job and the radios come up.
+
+Replace the WARN_ON(1) with a dev-level warning.  The fallback path and
+the surrounding "No reg rules available" / "failed to extract
+regulatory info" messages are unchanged.  This mirrors the in-function
+TODO which already acknowledges the case needs proper handling
+upstream.
+
+---
+--- a/drivers/net/wireless/ath/ath12k/wmi.c
++++ b/drivers/net/wireless/ath/ath12k/wmi.c
+@@ -6994,7 +6994,7 @@
+ 	 * reverted at the fw and the old SCAN_CHAN_LIST cmd needs to be sent.
+ 	 */
+ 	/* TODO: This is rare, but still should also be handled */
+-	WARN_ON(1);
++	ath12k_warn(ab, "failed to process regulatory channel list event\n");
+ 
+ out:
+ 	/* In some error cases, even a valid pdev_idx might not be available */
