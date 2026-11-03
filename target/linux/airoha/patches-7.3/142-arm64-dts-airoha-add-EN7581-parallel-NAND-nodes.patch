@@ -1,0 +1,61 @@
+From 766355cd8e8033656fe702cb173d5089d7cbb09f Mon Sep 17 00:00:00 2001
+From: pbs05 <27010143+pbs05@users.noreply.github.com>
+Date: Tue, 3 Nov 2026 22:55:19 +0800
+Subject: [PATCH 3/9] arm64: dts: airoha: add EN7581 parallel NAND nodes
+
+Rebased from patches-6.18 onto linux-7.3.1.
+
+Content unchanged; only patch-container normalization (dropped the
+embedded Signed-off-by: lean line between the index line and the
+file headers, and the stray blank line after index).
+
+Signed-off-by: pbs05 <27010143+pbs05@users.noreply.github.com>
+Signed-off-by: lean <chenlin@fnnas.com>
+Signed-off-by: rea-analysis <rea-analysis@local>
+---
+ arch/arm64/boot/dts/airoha/en7581.dtsi | 29 ++++++++++++++++++++++++++
+ 1 file changed, 29 insertions(+)
+
+diff --git a/arch/arm64/boot/dts/airoha/en7581.dtsi b/arch/arm64/boot/dts/airoha/en7581.dtsi
+index ff6908a76..6e828ceba 100644
+--- a/arch/arm64/boot/dts/airoha/en7581.dtsi
++++ b/arch/arm64/boot/dts/airoha/en7581.dtsi
+@@ -173,6 +173,35 @@ spi_nand: nand@0 {
+ 			};
+ 		};
+ 
++		pnand: nand-controller@1fa11000 {
++			compatible = "airoha,en7581-nfc";
++			reg = <0x0 0x1fa11000 0x0 0x580>;
++
++			clocks = <&scuclk EN7523_CLK_SPI>;
++			clock-names = "nfi_clk";
++			ecc-engine = <&pnand_ecc>;
++
++			#address-cells = <1>;
++			#size-cells = <0>;
++
++			/*
++			 * Serial and parallel NAND share the NFI register bank and pins.
++			 * Board DTS selects one data path and its corresponding pinmux.
++			 * Both controller nodes stay disabled in the SoC description.
++			 */
++			status = "disabled";
++		};
++
++		pnand_ecc: ecc@1fa12000 {
++			compatible = "airoha,en7581-nand-ecc";
++			reg = <0x0 0x1fa12000 0x0 0x150>;
++
++			clocks = <&scuclk EN7523_CLK_SPI>;
++			clock-names = "nfiecc_clk";
++
++			status = "disabled";
++		};
++
+ 		scuclk: clock-controller@1fb00000 {
+ 			compatible = "airoha,en7581-scu";
+ 			reg = <0x0 0x1fb00000 0x0 0x970>;
+-- 
+2.52.0.windows.1
+

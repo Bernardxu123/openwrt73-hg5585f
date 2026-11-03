@@ -197,3 +197,47 @@ define Device/quantum_q1000k-ubi
   SOC := an7581
 endef
 TARGET_DEVICES += quantum_q1000k-ubi
+
+# FiberHome HG5585F (CU/CT): parallel NAND, PON, MT7916D, dual USB.
+define Device/fiberhome_hg5585f-common
+  $(call Device/FitImageLzma)
+  DEVICE_VENDOR := FiberHome
+  KERNEL_LOADADDR := 0x8a000000
+  BLOCKSIZE := 128k
+  PAGESIZE := 2048
+  UBOOTENV_IN_UBI := 1
+  KERNEL_IN_UBI := 1
+  KERNEL := kernel-bin | gzip
+  KERNEL_INITRAMFS_SUFFIX := -recovery.itb
+  IMAGES := sysupgrade.itb
+  # L1 minimal set; PON/WiFi packages are added in the PON phase.
+  DEVICE_PACKAGES := kmod-gpio-button-hotplug kmod-leds-gpio kmod-usb3 \
+    fitblk nand-utils ubi-utils
+endef
+
+define Device/fiberhome-ubi-images
+  KERNEL_INITRAMFS := kernel-bin | lzma | \
+	fit lzma $$(KDIR)/image-$$(DEVICE_DTS).dtb with-initrd | pad-to 128k
+  IMAGE/sysupgrade.itb := append-kernel | \
+	fit gzip $$(KDIR)/image-$$(DEVICE_DTS).dtb external-static-with-rootfs | \
+	append-metadata
+endef
+
+define Device/fiberhome_hg5585f-ct
+  $(call Device/fiberhome_hg5585f-common)
+  DEVICE_MODEL := HG5585F
+  DEVICE_VARIANT := CT
+  DEVICE_DTS := an7581-fiberhome-hg5585f-ct
+  DEVICE_PACKAGES += kmod-phy-maxlinear
+  $(call Device/fiberhome-ubi-images)
+endef
+TARGET_DEVICES += fiberhome_hg5585f-ct
+
+define Device/fiberhome_hg5585f-cu
+  $(call Device/fiberhome_hg5585f-common)
+  DEVICE_MODEL := HG5585F
+  DEVICE_VARIANT := CU
+  DEVICE_DTS := an7581-fiberhome-hg5585f-cu
+  $(call Device/fiberhome-ubi-images)
+endef
+TARGET_DEVICES += fiberhome_hg5585f-cu
