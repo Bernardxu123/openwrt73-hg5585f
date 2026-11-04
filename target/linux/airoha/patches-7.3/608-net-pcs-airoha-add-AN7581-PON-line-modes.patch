@@ -141,7 +141,7 @@ index 5532a8c8e..6ef911df0 100644
 +	if (ret)
 +		return ret;
 +
-+	port->interface = rx_interface;
++	priv->interface = rx_interface;
 +	priv->pon_mode = mode;
 +	/* The optical frontend supplies both electrical settings before PMA bring-up. */
 +	ret = regmap_write(priv->pcs_pma[port->index],
@@ -189,7 +189,7 @@ index 5532a8c8e..6ef911df0 100644
 +	if (mode > AIROHA_PCS_PON_MODE_EPON_10G_10G)
 +		return -EINVAL;
 +
-+	ret = priv->data->pon_retrain_rx(priv, port->index, port->interface);
++	ret = priv->data->pon_retrain_rx(priv, port->index, priv->interface);
 +	if (ret && ret != -EIO)
 +		return ret;
 +	if (ret == -EIO)
