@@ -44,6 +44,9 @@ jobs:
           ./scripts/feeds update -a
           ./scripts/feeds install -a
 
+      - name: Patch PON driver for Linux 7.3
+        run: sh scripts/patch-pon-7.3.sh
+
       - name: Configure
         run: |
           cp configs/hg5585f-cu.config .config
