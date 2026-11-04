@@ -219,7 +219,8 @@ define Device/fiberhome_hg5585f-common
     airoha-ponctl airoha-pond luci-app-pon \
     luci-theme-vantage luci-app-vantage \
     luci-i18n-vantage-theme-zh-cn luci-i18n-vantage-zh-cn \
-    luci-i18n-base-zh-cn luci-i18n-firewall-zh-cn
+    luci-i18n-base-zh-cn luci-i18n-firewall-zh-cn \
+    honk luci-app-honk
 endef
 
 define Device/fiberhome-ubi-images
