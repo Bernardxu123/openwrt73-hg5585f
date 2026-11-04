@@ -1,0 +1,4 @@
+#!/bin/sh
+chmod 640 /etc/shadow
+chown root:shadow /etc/shadow 2>/dev/null || true
+exit 0

@@ -211,9 +211,12 @@ define Device/fiberhome_hg5585f-common
   KERNEL_INITRAMFS_SUFFIX := -recovery.itb
   IMAGES := sysupgrade.itb
   # L2a: LuCI + MT7916D WiFi (EEPROM comes from factory nvmem via DTS).
+  # L2b: pbs05 PON driver + userspace + LuCI app (feeds below).
   DEVICE_PACKAGES := kmod-gpio-button-hotplug kmod-leds-gpio kmod-usb3 \
     kmod-usb-ledtrig-usbport fitblk nand-utils ubi-utils \
-    luci luci-proto-ppp kmod-mt7915e kmod-mt7916-firmware wpad-basic-mbedtls
+    luci luci-proto-ppp kmod-mt7915e kmod-mt7916-firmware wpad-basic-mbedtls \
+    kmod-airoha-xpon kmod-airoha-pon-frontend kmod-airoha-paged-bosa \
+    airoha-ponctl airoha-pond luci-app-pon
 endef
 
 define Device/fiberhome-ubi-images
