@@ -216,7 +216,10 @@ define Device/fiberhome_hg5585f-common
     kmod-usb-ledtrig-usbport fitblk nand-utils ubi-utils \
     luci luci-proto-ppp kmod-mt7915e kmod-mt7916-firmware wpad-basic-mbedtls \
     kmod-airoha-xpon kmod-airoha-pon-frontend kmod-airoha-paged-bosa \
-    airoha-ponctl airoha-pond luci-app-pon
+    airoha-ponctl airoha-pond luci-app-pon \
+    luci-theme-vantage luci-app-vantage \
+    luci-i18n-vantage-theme-zh-cn luci-i18n-vantage-zh-cn \
+    luci-i18n-base-zh-cn luci-i18n-firewall-zh-cn
 endef
 
 define Device/fiberhome-ubi-images
