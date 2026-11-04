@@ -210,9 +210,10 @@ define Device/fiberhome_hg5585f-common
   KERNEL := kernel-bin | gzip
   KERNEL_INITRAMFS_SUFFIX := -recovery.itb
   IMAGES := sysupgrade.itb
-  # L1 minimal set; PON/WiFi packages are added in the PON phase.
+  # L2a: LuCI + MT7916D WiFi (EEPROM comes from factory nvmem via DTS).
   DEVICE_PACKAGES := kmod-gpio-button-hotplug kmod-leds-gpio kmod-usb3 \
-    fitblk nand-utils ubi-utils
+    kmod-usb-ledtrig-usbport fitblk nand-utils ubi-utils \
+    luci luci-proto-ppp kmod-mt7915e kmod-mt7916-firmware wpad-basic-mbedtls
 endef
 
 define Device/fiberhome-ubi-images
