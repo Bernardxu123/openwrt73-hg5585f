@@ -56,6 +56,12 @@ jobs:
       - name: Download sources
         run: make download -j8 V=s
 
+      # Enabling BTF/KPROBES/NETKIT selects new kernel symbols.  In batch
+      # builds `make syncconfig` stops on them; accept the Kconfig defaults
+      # once so the kernel config is stable before the real build.
+      - name: Prepare kernel config defaults
+        run: yes "" | make kernel_oldconfig
+
       - name: Build
         run: make -j"$(nproc)" V=s
 
