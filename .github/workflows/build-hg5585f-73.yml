@@ -58,6 +58,19 @@ jobs:
       - name: Build
         run: make -j"$(nproc)" V=s
 
+      # Preserve the toolchain even when the build fails, so the next
+      # kernel-only fix does not spend ~25 min rebuilding it.
+      - name: Save host tools + toolchain
+        if: always()
+        continue-on-error: true
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            staging_dir/toolchain-*
+            build_dir/toolchain-*
+            build_dir/host
+          key: toolchain-v1-${{ hashFiles('configs/hg5585f-cu.config') }}
+
       - name: Collect artifacts
         if: always()
         uses: actions/upload-artifact@v4
