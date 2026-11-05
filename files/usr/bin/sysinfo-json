@@ -1,0 +1,100 @@
+#!/bin/sh
+# Emit CPU architecture, per-core frequency and thermal zones as JSON.
+# Used by the LuCI status page (admin/status/sysinfo).
+
+json_str() {
+	printf '"%s"' "$(printf '%s' "$1" | sed 's/\\/\\\\/g; s/"/\\"/g')"
+}
+
+part_name() {
+	case "$1" in
+		0xd01) echo 'Cortex-A32' ;;
+		0xd03) echo 'Cortex-A53' ;;
+		0xd04) echo 'Cortex-A35' ;;
+		0xd05) echo 'Cortex-A55' ;;
+		0xd07) echo 'Cortex-A57' ;;
+		0xd08) echo 'Cortex-A72' ;;
+		0xd09) echo 'Cortex-A73' ;;
+		0xd0a) echo 'Cortex-A75' ;;
+		0xd0b) echo 'Cortex-A76' ;;
+		0xd0c) echo 'Neoverse-N1' ;;
+		0xd0d) echo 'Cortex-A77' ;;
+		0xd0e) echo 'Cortex-A76AE' ;;
+		0xd40) echo 'Neoverse-V1' ;;
+		0xd41) echo 'Cortex-A78' ;;
+		0xd44) echo 'Cortex-X1' ;;
+		0xd46) echo 'Cortex-A510' ;;
+		0xd47) echo 'Cortex-A710' ;;
+		0xd48) echo 'Cortex-X2' ;;
+		0xd4d) echo 'Cortex-A715' ;;
+		0xd4e) echo 'Cortex-X3' ;;
+		*) echo '' ;;
+	esac
+}
+
+imp=$(awk -F': ' '/^CPU implementer/{print $2; exit}' /proc/cpuinfo 2>/dev/null)
+part=$(awk -F': ' '/^CPU part/{print $2; exit}' /proc/cpuinfo 2>/dev/null)
+carch=$(awk -F': ' '/^CPU architecture/{print $2; exit}' /proc/cpuinfo 2>/dev/null)
+machine=$(uname -m 2>/dev/null)
+
+case "$imp" in
+	0x41) vendor='ARM' ;;
+	0x42) vendor='Broadcom' ;;
+	0x43) vendor='Cavium' ;;
+	0x48) vendor='HiSilicon' ;;
+	0x4e) vendor='NVIDIA' ;;
+	0x51) vendor='Qualcomm' ;;
+	0x61) vendor='Apple' ;;
+	*) vendor='' ;;
+esac
+
+core=$(part_name "$part")
+model=$(awk -F': ' '/^model name/{print $2; exit}' /proc/cpuinfo 2>/dev/null)
+# Generic AArch64 strings ("ARMv8 Processor rev 4 (v8l)") say nothing useful;
+# the MIDR part id is the reliable source in that case.
+case "$model" in
+	ARMv8*|armv8*|'') model='' ;;
+esac
+[ -n "$model" ] || model=$(printf '%s%s' "${vendor:+$vendor }" "${core:-CPU}")
+
+if [ -n "$carch" ]; then
+	arch=$(printf 'ARMv%s-A (%s)' "$carch" "$machine")
+else
+	arch=$(printf '%s (%s)' "${vendor:-$(uname -s)}" "$machine")
+fi
+
+board=$(tr '\0' ' ' < /proc/device-tree/compatible 2>/dev/null | awk '{print $1}')
+
+cores=$(grep -c '^processor' /proc/cpuinfo 2>/dev/null)
+[ -n "$cores" ] || cores=1
+freq_min=$(cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_min_freq 2>/dev/null)
+freq_max=$(cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq 2>/dev/null)
+governor=$(cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor 2>/dev/null)
+avail=$(cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_available_frequencies 2>/dev/null)
+
+printf '{"arch":%s,"model":%s,"board":%s,"cores":%s,"governor":%s,' \
+	"$(json_str "$arch")" "$(json_str "$model")" "$(json_str "$board")" "$cores" "$(json_str "$governor")"
+printf '"freq_min":%s,"freq_max":%s,"freq_avail":"%s","cores_freq":[' \
+	"${freq_min:-0}" "${freq_max:-0}" "$avail"
+
+first=1
+for c in /sys/devices/system/cpu/cpu*/cpufreq/scaling_cur_freq; do
+	[ -r "$c" ] || continue
+	cur=$(cat "$c" 2>/dev/null)
+	[ -n "$cur" ] || continue
+	[ "$first" = 1 ] || printf ','
+	first=0
+	printf '{"cpu":%s,"khz":%s}' "$(echo "$c" | sed 's#.*/cpu\([0-9]*\)/.*#\1#')" "$cur"
+done
+printf '],"thermal":['
+
+first=1
+for z in /sys/class/thermal/thermal_zone*; do
+	[ -d "$z" ] || continue
+	t=$(cat "$z/temp" 2>/dev/null)
+	[ -n "$t" ] || continue
+	[ "$first" = 1 ] || printf ','
+	first=0
+	printf '{"type":%s,"milli_c":%s}' "$(json_str "$(cat "$z/type" 2>/dev/null)")" "$t"
+done
+printf ']}\n'
