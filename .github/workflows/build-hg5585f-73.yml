@@ -65,6 +65,9 @@ jobs:
       - name: Prepare kernel config defaults
         run: yes "" | make kernel_oldconfig
 
+      - name: Check honk kernel config
+        run: sh scripts/check-honk-config.sh
+
       - name: Build
         run: make -j"$(nproc)" V=s
 

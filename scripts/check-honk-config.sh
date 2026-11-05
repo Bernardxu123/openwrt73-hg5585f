@@ -1,0 +1,34 @@
+#!/bin/sh
+# Fail early when the generated 7.3 kernel .config still has symbols that
+# would make batch syncconfig prompt (the exact failure mode seen in CI).
+set -e
+
+cfg="$(find build_dir -path '*/linux-7.3.1/.config' -print -quit 2>/dev/null || true)"
+[ -n "$cfg" ] || {
+	echo "check-honk-config: kernel .config not found" >&2
+	exit 1
+}
+
+echo "check-honk-config: $cfg"
+grep -E '^(CONFIG_DEBUG_INFO_BTF|CONFIG_KPROBES|CONFIG_TRACEPOINTS|CONFIG_NETKIT|CONFIG_CGROUP_BPF|CONFIG_FRAME_WARN|CONFIG_FUNCTION_TRACER|CONFIG_QUEUED_SPINLOCKS_TRACE_CONTENDED_RELEASE)=' "$cfg" || true
+
+fail=0
+for sym in \
+	'CONFIG_DEBUG_INFO_BTF=y' \
+	'CONFIG_KPROBES=y' \
+	'CONFIG_TRACEPOINTS=y' \
+	'CONFIG_NETKIT=y' \
+	'CONFIG_CGROUP_BPF=y' \
+	'CONFIG_FRAME_WARN=2048'
+do
+	grep -qx "$sym" "$cfg" || { echo "MISSING: $sym" >&2; fail=1; }
+done
+for sym in \
+	'# CONFIG_FUNCTION_TRACER is not set' \
+	'# CONFIG_QUEUED_SPINLOCKS_TRACE_CONTENDED_RELEASE is not set'
+do
+	grep -qx "$sym" "$cfg" || { echo "MISSING: $sym" >&2; fail=1; }
+done
+
+[ "$fail" = 0 ] || exit 1
+echo "check-honk-config: OK"
