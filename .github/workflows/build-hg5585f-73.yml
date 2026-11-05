@@ -84,11 +84,32 @@ jobs:
             build_dir/host
           key: toolchain-v1-${{ hashFiles('configs/hg5585f-cu.config') }}
 
+      # Stamp every image with the build date and the run number, so two images
+      # compiled from the same commit stay distinguishable after download.
+      - name: Tag images with date and build number
+        if: always()
+        run: |
+          TAG="$(date -u +%Y%m%d)-b${{ github.run_number }}"
+          echo "BUILD_TAG=$TAG" >> "$GITHUB_ENV"
+          cd bin/targets/airoha/an7581 2>/dev/null || exit 0
+          for f in *sysupgrade*.itb *recovery*.itb; do
+            [ -e "$f" ] || continue
+            cp -f "$f" "${f%.itb}-${TAG}.itb"
+          done
+          {
+            echo "### Firmware build $TAG"
+            echo ''
+            echo '```'
+            ls -l --time-style=+ *.itb 2>/dev/null || true
+            sha256sum *.itb 2>/dev/null || true
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
       - name: Collect artifacts
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: hg5585f-cu-7.3.1
+          name: hg5585f-cu-7.3.1-${{ env.BUILD_TAG || github.run_number }}
           if-no-files-found: warn
           path: |
             bin/targets/airoha/an7581/*sysupgrade*
