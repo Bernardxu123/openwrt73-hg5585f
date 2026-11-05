@@ -1,0 +1,103 @@
+diff --git a/system.c b/system.c
+index 8c7fc07..1a7c256 100644
+--- a/system.c
++++ b/system.c
+@@ -134,6 +134,58 @@ static void system_board_riscv(char *isa)
+ }
+ #endif
+ 
++#ifdef __aarch64__
++static const struct {
++	unsigned int part;
++	const char *name;
++} system_arm_parts[] = {
++	{ 0xd01, "Cortex-A32" },
++	{ 0xd03, "Cortex-A53" },
++	{ 0xd04, "Cortex-A35" },
++	{ 0xd05, "Cortex-A55" },
++	{ 0xd07, "Cortex-A57" },
++	{ 0xd08, "Cortex-A72" },
++	{ 0xd09, "Cortex-A73" },
++	{ 0xd0a, "Cortex-A75" },
++	{ 0xd0b, "Cortex-A76" },
++	{ 0xd0c, "Neoverse-N1" },
++	{ 0xd0d, "Cortex-A77" },
++	{ 0xd40, "Neoverse-V1" },
++	{ 0xd41, "Cortex-A78" },
++	{ 0xd44, "Cortex-X1" },
++	{ 0xd46, "Cortex-A510" },
++	{ 0xd47, "Cortex-A710" },
++	{ 0xd48, "Cortex-X2" },
++	{ 0xd4d, "Cortex-A715" },
++	{ 0xd4e, "Cortex-X3" },
++};
++
++static const char *system_arm_part_name(unsigned int part)
++{
++	unsigned int i;
++
++	for (i = 0; i < sizeof(system_arm_parts) / sizeof(system_arm_parts[0]); i++)
++		if (system_arm_parts[i].part == part)
++			return system_arm_parts[i].name;
++
++	return NULL;
++}
++
++static const char *system_arm_vendor_name(unsigned int impl)
++{
++	switch (impl) {
++	case 0x41: return "ARM";
++	case 0x42: return "Broadcom";
++	case 0x43: return "Cavium";
++	case 0x48: return "HiSilicon";
++	case 0x4e: return "NVIDIA";
++	case 0x51: return "Qualcomm";
++	case 0x61: return "Apple";
++	default:   return NULL;
++	}
++}
++#endif
++
+ static int system_board(struct ubus_context *ctx, struct ubus_object *obj,
+                  struct ubus_request_data *req, const char *method,
+                  struct blob_attr *msg)
+@@ -144,6 +196,9 @@ static int system_board(struct ubus_context *ctx, struct ubus_object *obj,
+ 	const char *rootfs_type = system_rootfs_type();
+ 	struct utsname utsname;
+ 	FILE *f;
++#ifdef __aarch64__
++	unsigned int arm_impl = 0, arm_part = 0;
++#endif
+ 
+ 	blob_buf_init(&b, 0);
+ 
+@@ -166,8 +221,27 @@ static int system_board(struct ubus_context *ctx, struct ubus_object *obj,
+ 			val += 2;
+ 
+ #ifdef __aarch64__
+-			if (!strcasecmp(key, "CPU revision")) {
+-				snprintf(line, sizeof(line), "ARMv8 Processor rev %lu", strtoul(val, NULL, 16));
++			if (!strcasecmp(key, "CPU part")) {
++				arm_part = strtoul(val, NULL, 16);
++			} else if (!strcasecmp(key, "CPU implementer")) {
++				arm_impl = strtoul(val, NULL, 16);
++			} else if (!strcasecmp(key, "CPU revision")) {
++				const char *name = system_arm_part_name(arm_part);
++				const char *vendor = system_arm_vendor_name(arm_impl);
++
++				/*
++				 * "ARMv8 Processor rev N" says nothing about the actual
++				 * core.  When the MIDR part id is known, report the core
++				 * name instead; fall back to the generic string.
++				 */
++				if (name)
++					snprintf(line, sizeof(line), "%s%s%s (ARMv8)",
++						 vendor ? vendor : "ARM",
++						 vendor ? " " : " ", name);
++				else
++					snprintf(line, sizeof(line), "ARMv8 Processor rev %lu",
++						 strtoul(val, NULL, 16));
++
+ 				blobmsg_add_string(&b, "system", line);
+ 				break;
+ 			}

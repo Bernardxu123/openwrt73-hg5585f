@@ -218,6 +218,7 @@ define Device/fiberhome_hg5585f-common
     kmod-airoha-xpon kmod-airoha-pon-frontend kmod-airoha-paged-bosa \
     airoha-ponctl airoha-pond luci-app-pon \
     luci-theme-vantage luci-app-vantage luci-theme-design \
+    cpufreq luci-app-cpufreq luci-i18n-cpufreq-zh-cn \
     ethtool htop tcpdump jq \
     luci-i18n-vantage-theme-zh-cn luci-i18n-vantage-zh-cn \
     luci-i18n-base-zh-cn luci-i18n-firewall-zh-cn \
