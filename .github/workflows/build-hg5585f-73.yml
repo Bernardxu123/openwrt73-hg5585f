@@ -43,7 +43,7 @@ jobs:
             staging_dir/toolchain-*
             build_dir/toolchain-*
             build_dir/host
-          key: toolchain-v1-${{ matrix.device }}-${{ hashFiles(format('configs/hg5585f-{0}.config', matrix.device)) }}
+          key: toolchain-v1-${{ matrix.device }}-${{ hashFiles('configs/hg5585f-cu.config', 'configs/hg5585f-ct.config') }}
           restore-keys: |
             toolchain-v1-
 
@@ -89,7 +89,7 @@ jobs:
             staging_dir/toolchain-*
             build_dir/toolchain-*
             build_dir/host
-          key: toolchain-v1-${{ matrix.device }}-${{ hashFiles(format('configs/hg5585f-{0}.config', matrix.device)) }}
+          key: toolchain-v1-${{ matrix.device }}-${{ hashFiles('configs/hg5585f-cu.config', 'configs/hg5585f-ct.config') }}
 
       # Stamp every image with the build date and the run number, so two images
       # compiled from the same commit stay distinguishable after download.
