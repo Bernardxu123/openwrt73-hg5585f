@@ -1,7 +1,8 @@
 #!/bin/sh
 uci -q set luci.main.lang='zh_cn'
-uci -q set luci.main.mediaurlbase='/luci-static/vantage'
-uci -q set luci.main.ucode_theme='vantage'
+uci -q set luci.main.mediaurlbase='/luci-static/design'
+uci -q set luci.main.ucode_theme='design'
 uci -q set luci.themes.Vantage='/luci-static/vantage'
+uci -q set luci.themes.Design='/luci-static/design'
 uci -q commit luci
 exit 0

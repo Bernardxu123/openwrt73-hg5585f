@@ -217,7 +217,7 @@ define Device/fiberhome_hg5585f-common
     luci luci-proto-ppp kmod-mt7915e kmod-mt7916-firmware wpad-basic-mbedtls \
     kmod-airoha-xpon kmod-airoha-pon-frontend kmod-airoha-paged-bosa \
     airoha-ponctl airoha-pond luci-app-pon \
-    luci-theme-vantage luci-app-vantage \
+    luci-theme-vantage luci-app-vantage luci-theme-design \
     luci-i18n-vantage-theme-zh-cn luci-i18n-vantage-zh-cn \
     luci-i18n-base-zh-cn luci-i18n-firewall-zh-cn \
     honk luci-app-honk
