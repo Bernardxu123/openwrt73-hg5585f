@@ -184,14 +184,6 @@
 	/* GPIO0 starts at pin 13 on AN7581. */
 	gpio-ranges = <&en7581_pinctrl 0 13 50>;
 
-	pon_pins: pon-pins {
-		mux {
-			/* Leave GPIO38/TX_DISABLE under optical frontend control. */
-			function = "pon";
-			groups = "pon_tx_disable_gpio";
-		};
-	};
-
 	mdio_pins: mdio-pins {
 		mux {
 			function = "mdio";
@@ -350,8 +342,6 @@
 };
 
 &xpon_mac {
-	pinctrl-names = "default";
-	pinctrl-0 = <&pon_pins>;
 	optical-front-end = <&hg5585f_bosa>;
 	data-path = <&gdm2>;
 	nvmem-cells = <&fiberhome_pon_serial>;
