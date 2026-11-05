@@ -12,13 +12,6 @@ permissions:
 
 jobs:
   build:
-    # One job per board: `make defconfig` keeps a single CONFIG_TARGET_DEVICE_*
-    # symbol per run, so CT and CU must not share a config file.
-    strategy:
-      fail-fast: false
-      matrix:
-        device: [ cu, ct ]
-    name: build (${{ matrix.device }})
     runs-on: ubuntu-24.04
     timeout-minutes: 360
     steps:
@@ -43,7 +36,7 @@ jobs:
             staging_dir/toolchain-*
             build_dir/toolchain-*
             build_dir/host
-          key: toolchain-v1-${{ matrix.device }}-${{ hashFiles('configs/hg5585f-cu.config', 'configs/hg5585f-ct.config') }}
+          key: toolchain-v1-${{ hashFiles('configs/hg5585f-cu.config') }}
           restore-keys: |
             toolchain-v1-
 
@@ -57,7 +50,7 @@ jobs:
 
       - name: Configure
         run: |
-          cp configs/hg5585f-${{ matrix.device }}.config .config
+          cp configs/hg5585f-cu.config .config
           make defconfig
           echo '--- target/device lines ---'
           grep -E 'CONFIG_TARGET_(airoha|DEVICE|PER_DEVICE)|CONFIG_TESTING_KERNEL' .config || true
@@ -89,7 +82,7 @@ jobs:
             staging_dir/toolchain-*
             build_dir/toolchain-*
             build_dir/host
-          key: toolchain-v1-${{ matrix.device }}-${{ hashFiles('configs/hg5585f-cu.config', 'configs/hg5585f-ct.config') }}
+          key: toolchain-v1-${{ hashFiles('configs/hg5585f-cu.config') }}
 
       # Stamp every image with the build date and the run number, so two images
       # compiled from the same commit stay distinguishable after download.
@@ -116,7 +109,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: hg5585f-${{ matrix.device }}-7.3.1-${{ env.BUILD_TAG || github.run_number }}
+          name: hg5585f-cu-7.3.1-${{ env.BUILD_TAG || github.run_number }}
           if-no-files-found: warn
           path: |
             bin/targets/airoha/an7581/*sysupgrade*
