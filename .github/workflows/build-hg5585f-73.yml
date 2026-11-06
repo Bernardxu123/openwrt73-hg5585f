@@ -80,11 +80,17 @@ jobs:
       # so that class of failure surfaces long before the image build.
       - name: Smoke build patched packages
         run: |
-          # Everything we patch in this tree, built on its own: a missing tool
-          # (automake, bison) or a bad source hash then fails in minutes
-          # instead of after the whole image build.
+          # Catch packaging problems in minutes instead of after the image
+          # build: a missing autotools tool, a bad git mirror hash, a patch
+          # that no longer applies.
+          #
+          # Only userspace packages are compiled here. nftables depends on
+          # kmod-nft-core, and compiling a kernel-module package straight after
+          # `make kernel_oldconfig` races the kernel's generated asm headers
+          # ("asm/percpu_types.h: No such file"), which a full `make` orders
+          # correctly. Its patches and sources are still validated by prepare.
           make package/libs/libnftnl/compile -j"$(nproc)" V=s
-          make package/network/utils/nftables/compile -j"$(nproc)" V=s
+          make package/network/utils/nftables/prepare V=s
           make package/network/utils/fullconenat-nft/download V=s
 
       - name: Build
