@@ -1,0 +1,34 @@
+#!/bin/sh
+# First-boot PON identity.
+#
+# The serial number and LOID are per-line credentials and must not live in this
+# public repository. Provision them at flash time:
+#
+#   /etc/pon-identity  (mode 0600, one KEY=VALUE per line)
+#   PON_SERIAL=46485454xxxxxxxx
+#   PON_LOID=0000000000000000xxxxxxxx
+#   PON_MODE=epon-10g-1g
+#
+# Without the file the identity stays empty and the PON line simply never
+# registers, which is the safe default.
+
+[ -f /etc/pon-identity ] || {
+	logger -t uci-defaults "20-pon-identity: /etc/pon-identity missing, PON identity left empty"
+	exit 0
+}
+
+. /etc/pon-identity
+
+[ -n "$PON_MODE" ] && uci -q set pon.line0.mode="$PON_MODE"
+[ -n "$PON_SERIAL" ] && uci -q set pon.line0.serial_number="$PON_SERIAL"
+[ -n "$PON_LOID" ] && {
+	uci -q set pon.line0_oam.loid="$PON_LOID"
+	uci -q set pon.line0_oam.operator='ctc'
+	uci -q set pon.line0_oam.ctc_oui='111111'
+	uci -q set pon.line0_oam.ctc_versions='21 30'
+	uci -q set pon.line0_omci.omcc_version='0xb0'
+	uci -q set pon.line0_omci.disable_enhanced_security='0'
+}
+
+uci -q commit pon
+exit 0

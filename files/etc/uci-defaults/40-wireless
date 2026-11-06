@@ -1,0 +1,43 @@
+#!/bin/sh
+# First-boot wireless defaults.
+#
+# Only the radio parameters and the SSID names are baked in: the WPA key is
+# read from /etc/wireless-psk so it never lives in this repository. Without
+# that file the APs stay disabled instead of shipping a known password.
+
+. /lib/functions.sh
+
+[ -f /etc/wireless-psk ] || {
+	logger -t uci-defaults "40-wireless: /etc/wireless-psk missing, keeping radios disabled"
+	exit 0
+}
+
+psk=$(cat /etc/wireless-psk)
+[ -n "$psk" ] || exit 0
+
+apply_radio() {
+	local radio="$1" band="$2" channel="$3" htmode="$4" ssid="$5"
+
+	uci -q set wireless.${radio}.disabled='0'
+	uci -q set wireless.${radio}.country='CN'
+	uci -q set wireless.${radio}.channel="$channel"
+	uci -q set wireless.${radio}.htmode="$htmode"
+	uci -q set wireless.${radio}.band="$band"
+	# mt76 has no vendor dbdc k/v tuning; 802.11k/v are the standard
+	# equivalents of the RRM switches QWRT sets in its mtwifi profile.
+	uci -q set wireless.${radio}.ieee80211k='1'
+	uci -q set wireless.${radio}.ieee80211v='1'
+
+	uci -q set wireless.default_${radio}.disabled='0'
+	uci -q set wireless.default_${radio}.mode='ap'
+	uci -q set wireless.default_${radio}.network='lan'
+	uci -q set wireless.default_${radio}.ssid="$ssid"
+	uci -q set wireless.default_${radio}.encryption='psk2'
+	uci -q set wireless.default_${radio}.key="$psk"
+}
+
+apply_radio radio0 2g 11 HE20 bernard
+apply_radio radio1 5g 36 HE160 bernard_5G
+
+uci -q commit wireless
+exit 0
