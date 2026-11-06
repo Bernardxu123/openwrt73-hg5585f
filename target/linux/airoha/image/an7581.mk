@@ -220,6 +220,8 @@ define Device/fiberhome_hg5585f-common
     airoha-ponctl airoha-pond luci-app-pon \
     luci-theme-vantage luci-app-vantage luci-theme-design \
     cpufreq luci-app-cpufreq luci-i18n-cpufreq-zh-cn \
+    ddns-scripts ddns-scripts-services luci-app-ddns \
+    nginx-ssl nginx-ssl-util openssl-util \
     ethtool htop tcpdump jq \
     luci-i18n-vantage-theme-zh-cn luci-i18n-vantage-zh-cn \
     luci-i18n-base-zh-cn luci-i18n-firewall-zh-cn \

@@ -483,3 +483,10 @@ CONFIG_FRAME_WARN=2048
 # nft-fullcone (NAT1) needs conntrack event callbacks
 CONFIG_NF_CONNTRACK_EVENTS=y
 CONFIG_NF_CONNTRACK_CHAIN_EVENTS=y
+
+# Software flow offload: enabled in the kernel, runtime default stays 0/0
+# so the A/B test can be done with uci alone.
+CONFIG_NF_FLOW_TABLE=y
+CONFIG_NF_FLOW_TABLE_INET=y
+CONFIG_NF_FLOW_TABLE_PROCFS=y
+CONFIG_NFT_FLOW_OFFLOAD=y
