@@ -8,10 +8,17 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   build:
+    # One job per board: `make defconfig` keeps a single CONFIG_TARGET_DEVICE_*
+    # symbol per run, so CT and CU must not share a config file.
+    strategy:
+      fail-fast: false
+      matrix:
+        device: [ cu, ct ]
+    name: build (${{ matrix.device }})
     runs-on: ubuntu-24.04
     timeout-minutes: 360
     steps:
@@ -25,10 +32,10 @@ jobs:
             gettext git libncurses-dev libssl-dev python3 python3-dev python3-setuptools \
             rsync unzip zlib1g-dev file wget swig libelf-dev dwarves
 
-      # Reuse the host tools/toolchain between runs: a full run is ~1h, most of
-      # which is the toolchain. The key includes the config so a config change
-      # invalidates it, and restore-keys keeps the last toolchain for a fast
-      # retry after a kernel-only fix.
+      # Reuse the host tools/toolchain between runs: a full run is ~3h, most of
+      # which is the toolchain. The key includes the board config so a config
+      # change invalidates it, and restore-keys keeps the last toolchain for a
+      # fast retry after a kernel-only fix.
       - name: Cache host tools + toolchain
         uses: actions/cache@v4
         with:
@@ -36,8 +43,9 @@ jobs:
             staging_dir/toolchain-*
             build_dir/toolchain-*
             build_dir/host
-          key: toolchain-v1-${{ hashFiles('configs/hg5585f-cu.config') }}
+          key: toolchain-v2-${{ matrix.device }}-${{ hashFiles('configs/hg5585f-cu.config', 'configs/hg5585f-ct.config') }}
           restore-keys: |
+            toolchain-v2-${{ matrix.device }}-
             toolchain-v1-
 
       - name: Prepare feeds
@@ -50,7 +58,7 @@ jobs:
 
       - name: Configure
         run: |
-          cp configs/hg5585f-cu.config .config
+          cp configs/hg5585f-${{ matrix.device }}.config .config
           make defconfig
           echo '--- target/device lines ---'
           grep -E 'CONFIG_TARGET_(airoha|DEVICE|PER_DEVICE)|CONFIG_TESTING_KERNEL' .config || true
@@ -82,10 +90,10 @@ jobs:
             staging_dir/toolchain-*
             build_dir/toolchain-*
             build_dir/host
-          key: toolchain-v1-${{ hashFiles('configs/hg5585f-cu.config') }}
+          key: toolchain-v2-${{ matrix.device }}-${{ hashFiles('configs/hg5585f-cu.config', 'configs/hg5585f-ct.config') }}
 
-      # Stamp every image with the build date and the run number, so two images
-      # compiled from the same commit stay distinguishable after download.
+      # Rename in place: a copy would leave two identical images per board and
+      # make the artifact ambiguous.
       - name: Tag images with date and build number
         if: always()
         run: |
@@ -94,14 +102,15 @@ jobs:
           cd bin/targets/airoha/an7581 2>/dev/null || exit 0
           for f in *sysupgrade*.itb *recovery*.itb; do
             [ -e "$f" ] || continue
-            cp -f "$f" "${f%.itb}-${TAG}.itb"
+            case "$f" in *"-$TAG.itb") continue ;; esac
+            mv -f "$f" "${f%.itb}-$TAG.itb"
           done
+          sha256sum ./*-"$TAG".itb > "sha256sums-$TAG.txt" 2>/dev/null || true
           {
-            echo "### Firmware build $TAG"
+            echo "### Firmware build $TAG (${{ matrix.device }})"
             echo ''
             echo '```'
-            ls -l --time-style=+ *.itb 2>/dev/null || true
-            sha256sum *.itb 2>/dev/null || true
+            sha256sum ./*-"$TAG".itb 2>/dev/null || true
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
 
@@ -109,13 +118,28 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: hg5585f-cu-7.3.1-${{ env.BUILD_TAG || github.run_number }}
+          name: hg5585f-${{ matrix.device }}-7.3.1-${{ env.BUILD_TAG || github.run_number }}
           if-no-files-found: warn
           path: |
-            bin/targets/airoha/an7581/*sysupgrade*
-            bin/targets/airoha/an7581/*recovery*
+            bin/targets/airoha/an7581/*sysupgrade*.itb
+            bin/targets/airoha/an7581/*recovery*.itb
             bin/targets/airoha/an7581/config.buildinfo
-            bin/targets/airoha/an7581/sha256sums
+            bin/targets/airoha/an7581/sha256sums*.txt
+
+      - name: Publish firmware release
+        if: always()
+        continue-on-error: true
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: fw-${{ env.BUILD_TAG }}-${{ matrix.device }}
+          name: HG5585F ${{ matrix.device }} ${{ env.BUILD_TAG }}
+          body: |
+            OpenWrt SNAPSHOT, kernel 7.3.1, board `fiberhome,hg5585f-${{ matrix.device }}`.
+            Built from `${{ github.sha }}` (run ${{ github.run_number }}).
+          prerelease: true
+          files: |
+            bin/targets/airoha/an7581/*-${{ env.BUILD_TAG }}.itb
+            bin/targets/airoha/an7581/sha256sums-${{ env.BUILD_TAG }}.txt
 
       - name: Show failure hints
         if: failure()
