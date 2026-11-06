@@ -1,0 +1,7 @@
+#!/bin/sh
+# NAT1 / FullCone: firewall4 turns `fullcone` into a fullcone expression only
+# when kmod-nft-fullcone is present; without the module the option is inert.
+uci -q set firewall.@defaults[0].fullcone='1'
+uci -q set firewall.@defaults[0].fullcone6='0'
+uci -q commit firewall
+exit 0
