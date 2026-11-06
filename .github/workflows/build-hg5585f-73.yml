@@ -114,6 +114,21 @@ jobs:
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
 
+      # Guard against the old copy-based naming coming back: exactly one
+      # sysupgrade and one recovery per board, and nothing left untagged.
+      - name: Verify one image per type
+        if: success()
+        run: |
+          cd bin/targets/airoha/an7581
+          tag="$BUILD_TAG"
+          up=$(ls -1 ./*-squashfs-sysupgrade-"$tag".itb 2>/dev/null | wc -l)
+          rec=$(ls -1 ./*-initramfs-recovery-"$tag".itb 2>/dev/null | wc -l)
+          left=$(ls -1 ./*.itb 2>/dev/null | grep -v -- "-$tag.itb" | wc -l)
+          echo "sysupgrade=$up recovery=$rec untagged=$left tag=$tag"
+          [ "$up" = 1 ] || { echo "expected exactly 1 sysupgrade image" >&2; exit 1; }
+          [ "$rec" = 1 ] || { echo "expected exactly 1 recovery image" >&2; exit 1; }
+          [ "$left" = 0 ] || { echo "untagged images left in the output dir" >&2; ls -1 ./*.itb; exit 1; }
+
       - name: Collect artifacts
         if: always()
         uses: actions/upload-artifact@v4
@@ -127,7 +142,7 @@ jobs:
             bin/targets/airoha/an7581/sha256sums*.txt
 
       - name: Publish firmware release
-        if: always()
+        if: success()
         continue-on-error: true
         uses: softprops/action-gh-release@v2
         with:
