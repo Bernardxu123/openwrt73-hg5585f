@@ -1,19 +1,28 @@
 #!/bin/sh
 # First-boot wireless defaults.
 #
-# Only the radio parameters and the SSID names are baked in: the WPA key is
-# read from /etc/wireless-psk so it never lives in this repository. Without
-# that file the APs stay disabled instead of shipping a known password.
+# Nothing identifying is baked into this repository: the SSIDs and the WPA
+# key are read from /etc/wireless-cfg (mode 0600), provisioned at flash time:
+#
+#   WIFI_PSK=...
+#   WIFI_SSID_2G=...
+#   WIFI_SSID_5G=...
+#
+# Without that file the radios stay disabled instead of shipping a known
+# password or a public SSID name.
 
 . /lib/functions.sh
 
-[ -f /etc/wireless-psk ] || {
-	logger -t uci-defaults "40-wireless: /etc/wireless-psk missing, keeping radios disabled"
+[ -f /etc/wireless-cfg ] || {
+	logger -t uci-defaults "40-wireless: /etc/wireless-cfg missing, keeping radios disabled"
 	exit 0
 }
 
-psk=$(cat /etc/wireless-psk)
-[ -n "$psk" ] || exit 0
+. /etc/wireless-cfg
+
+[ -n "$WIFI_PSK" ] || exit 0
+ssid2g=${WIFI_SSID_2G:-HG5585F}
+ssid5g=${WIFI_SSID_5G:-HG5585F_5G}
 
 apply_radio() {
 	local radio="$1" band="$2" channel="$3" htmode="$4" ssid="$5"
@@ -33,11 +42,11 @@ apply_radio() {
 	uci -q set wireless.default_${radio}.network='lan'
 	uci -q set wireless.default_${radio}.ssid="$ssid"
 	uci -q set wireless.default_${radio}.encryption='psk2'
-	uci -q set wireless.default_${radio}.key="$psk"
+	uci -q set wireless.default_${radio}.key="$WIFI_PSK"
 }
 
-apply_radio radio0 2g 11 HE20 bernard
-apply_radio radio1 5g 36 HE160 bernard_5G
+apply_radio radio0 2g 11 HE20 "$ssid2g"
+apply_radio radio1 5g 36 HE160 "$ssid5g"
 
 uci -q commit wireless
 exit 0
