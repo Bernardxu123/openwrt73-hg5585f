@@ -1,0 +1,11 @@
+--- a/src/Makefile
++++ b/src/Makefile
+@@ -12,7 +12,7 @@
+ 	nft_ext_fullcone.o
+ 
+ # product
+-ccflags-y += -Werror -Wall
++ccflags-y += -Wall
+ 
+ # develop
+ #ccflags-y += -Wall -Wno-unused-function
