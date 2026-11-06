@@ -48,6 +48,17 @@ CONFIGURE_ARGS += \
 	--enable-static \
 	--enable-shared
 
+# The fullcone patch adds src/expr/fullcone.c to src/Makefile.am. automake is
+# not part of the build container, so make would try to regenerate
+# src/Makefile.in through build-aux/missing and fail with
+# "automake-1.17: command not found" (Error 127). The same source list change
+# is applied to the generated src/Makefile.in by the patch; touch it so make
+# treats it as up to date and never invokes automake.
+define Build/Prepare
+	$(call Build/Prepare/Default)
+	touch $(PKG_BUILD_DIR)/src/Makefile.in
+endef
+
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include/libnftnl
 	$(CP) \

@@ -64,6 +64,49 @@ Signed-off-by: Syrone Wong <wong.syrone@gmail.com>
  		      expr/redir.c	\
  		      expr/hash.c	\
  		      expr/socket.c	\
+--- a/src/Makefile.in
++++ b/src/Makefile.in
+@@ -141,6 +141,7 @@
+ 	expr/range.lo expr/connlimit.lo expr/counter.lo expr/ct.lo \
+ 	expr/data_reg.lo expr/dup.lo expr/exthdr.lo \
+ 	expr/flow_offload.lo expr/fib.lo expr/fwd.lo expr/last.lo \
++	expr/fullcone.lo \
+ 	expr/limit.lo expr/log.lo expr/lookup.lo expr/dynset.lo \
+ 	expr/immediate.lo expr/inner.lo expr/match.lo expr/meta.lo \
+ 	expr/numgen.lo expr/nat.lo expr/tproxy.lo expr/objref.lo \
+@@ -189,6 +190,7 @@
+ 	expr/$(DEPDIR)/dup.Plo expr/$(DEPDIR)/dynset.Plo \
+ 	expr/$(DEPDIR)/exthdr.Plo expr/$(DEPDIR)/fib.Plo \
+ 	expr/$(DEPDIR)/flow_offload.Plo expr/$(DEPDIR)/fwd.Plo \
++	expr/$(DEPDIR)/fullcone.Plo \
+ 	expr/$(DEPDIR)/hash.Plo expr/$(DEPDIR)/immediate.Plo \
+ 	expr/$(DEPDIR)/inner.Plo expr/$(DEPDIR)/last.Plo \
+ 	expr/$(DEPDIR)/limit.Plo expr/$(DEPDIR)/log.Plo \
+@@ -440,6 +442,7 @@
+ 		      expr/dup.c	\
+ 		      expr/exthdr.c	\
+ 		      expr/flow_offload.c \
++		      expr/fullcone.c \
+ 		      expr/fib.c	\
+ 		      expr/fwd.c	\
+ 		      expr/last.c	\
+@@ -566,6 +569,8 @@
+ expr/exthdr.lo: expr/$(am__dirstamp) expr/$(DEPDIR)/$(am__dirstamp)
+ expr/flow_offload.lo: expr/$(am__dirstamp) \
+ 	expr/$(DEPDIR)/$(am__dirstamp)
++expr/fullcone.lo: expr/$(am__dirstamp) \
++	expr/$(DEPDIR)/$(am__dirstamp)
+ expr/fib.lo: expr/$(am__dirstamp) expr/$(DEPDIR)/$(am__dirstamp)
+ expr/fwd.lo: expr/$(am__dirstamp) expr/$(DEPDIR)/$(am__dirstamp)
+ expr/last.lo: expr/$(am__dirstamp) expr/$(DEPDIR)/$(am__dirstamp)
+@@ -654,6 +659,7 @@
+ @AMDEP_TRUE@@am__include@ @am__quote@expr/$(DEPDIR)/exthdr.Plo@am__quote@ # am--include-marker
+ @AMDEP_TRUE@@am__include@ @am__quote@expr/$(DEPDIR)/fib.Plo@am__quote@ # am--include-marker
+ @AMDEP_TRUE@@am__include@ @am__quote@expr/$(DEPDIR)/flow_offload.Plo@am__quote@ # am--include-marker
++@AMDEP_TRUE@@am__include@ @am__quote@expr/$(DEPDIR)/fullcone.Plo@am__quote@ # am--include-marker
+ @AMDEP_TRUE@@am__include@ @am__quote@expr/$(DEPDIR)/fwd.Plo@am__quote@ # am--include-marker
+ @AMDEP_TRUE@@am__include@ @am__quote@expr/$(DEPDIR)/hash.Plo@am__quote@ # am--include-marker
+ @AMDEP_TRUE@@am__include@ @am__quote@expr/$(DEPDIR)/immediate.Plo@am__quote@ # am--include-marker
 --- /dev/null
 +++ b/src/expr/fullcone.c
 @@ -0,0 +1,174 @@

@@ -75,6 +75,11 @@ jobs:
 
       - name: Check honk kernel config
         run: sh scripts/check-kernel-config.sh
+      # Patched autotools packages fail late and inscrutably (missing automake
+      # shows up as "Error 127" after hours). Build libnftnl on its own first
+      # so that class of failure surfaces long before the image build.
+      - name: Smoke build libnftnl
+        run: make package/libs/libnftnl/compile -j"$(nproc)" V=s
 
       - name: Build
         run: make -j"$(nproc)" V=s
