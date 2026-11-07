@@ -217,7 +217,7 @@ define Device/fiberhome_hg5585f-common
     kmod-nft-fullcone kmod-nf-flow kmod-nft-offload \
     luci luci-proto-ppp kmod-mt7915e kmod-mt7916-firmware wpad-basic-mbedtls \
     kmod-airoha-xpon kmod-airoha-pon-frontend kmod-airoha-paged-bosa \
-    airoha-ponctl airoha-pond luci-app-pon \
+    airoha-ponctl airoha-pond luci-app-pon luci-i18n-pon-zh-cn \
     luci-theme-vantage luci-app-vantage luci-theme-design \
     cpufreq luci-app-cpufreq luci-i18n-cpufreq-zh-cn \
     ddns-scripts ddns-scripts-services luci-app-ddns \

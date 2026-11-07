@@ -74,6 +74,22 @@ h3c,hm2004-du)
 	json_close_object
 	json_close_object
 	;;
+fiberhome,hg5382a|fiberhome,hg5585f-ct|fiberhome,hg5585f-cu)
+	identity_available=1
+	json_add_object identity
+	json_add_object targets
+	json_add_object factory
+	json_add_object fields
+	# Same layout the vendor firmware exposes: board MAC at 0x2000,
+	# the 8-byte GPON SN at 0x2010 and the 32-byte device serial at 0x2020.
+	identity_field board_mac mac 8192 6 mac-binary6
+	identity_field pon_sn pon-sn 8208 8 pon-binary8
+	identity_field device_sn serial 8224 32 serial-text
+	json_close_object
+	json_close_object
+	json_close_object
+	json_close_object
+	;;
 nokia,xg-040g-md-ubi|nokia,xg-040g-tf-ubi)
 	identity_available=1
 	json_add_object identity
