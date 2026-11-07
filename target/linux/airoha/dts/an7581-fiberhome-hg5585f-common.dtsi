@@ -359,6 +359,12 @@
 	/* Re-mux the PON pins after the pinctrl driver reset the SCU IOMUX. */
 	pinctrl-names = "default";
 	pinctrl-0 = <&pon_pins>;
+	/*
+	 * This line is 10G-EPON.  Keep it as the driver default so the PON
+	 * stack still comes up correctly if /etc/config/pon is ever missing;
+	 * the vendor DTB leaves the XG-PON default in place and relies on UCI.
+	 */
+	airoha,default-line-mode = "epon-10g-1g";
 	optical-front-end = <&hg5585f_bosa>;
 	data-path = <&gdm2>;
 	nvmem-cells = <&fiberhome_pon_serial>;
