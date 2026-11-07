@@ -147,3 +147,19 @@ Not broken after all: batman-adv, ath10k-ct (empty .symvers, fixed in kernel.mk)
   rebuilt inside the sandbox (tools only, toolchain is path clean).
 - (done) Compile-tested non-x86 code touched by manual rebuilds with COMPILE_TEST.
 - 760-09: DSA_TAG_PROTO_MXL862_8021Q_VALUE moved from 31 to 36 (31 is MXL_GSW1XX in 7.3).
+
+## 2026-11-07 follow-up: xPON pins must be re-muxed in the board DTS
+
+`203-02-pinctrl-airoha-reset-SCU-IOMUX-registers-at-probe.patch` makes the
+pinctrl driver write 0 (GPIO mode) to every SCU mux register at probe, which
+undoes the bootloader's xPON pin configuration.  Without a `pinctrl-0` state
+the PON MAC loses TX_DISABLE/burst control on pins 49-54: the ONU keeps
+sending REGISTER_REQ (counters grow) while the OLT never answers, the line
+stays in `protocol-activating`, `pon0` never gets carrier and PPPoE is never
+started.  A QWRT/BSP image on the same hardware does not reset the IOMUX and
+registers on the first request, which is how this was pinned down.
+
+`an7581-fiberhome-hg5585f-common.dtsi` now declares `pon_pins` (function
+"pon", the single 7.3 group covering pins 49-54) and attaches it to
+`&xpon_mac`, mirroring pbs05/ponwrt.  If the group granularity ever needs to
+be finer, the driver has to grow per-pin PON groups first.

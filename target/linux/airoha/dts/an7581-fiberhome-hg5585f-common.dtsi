@@ -184,6 +184,20 @@
 	/* GPIO0 starts at pin 13 on AN7581. */
 	gpio-ranges = <&en7581_pinctrl 0 13 50>;
 
+	/*
+	 * The xPON pins (49-54, incl. GPIO38/TX_DISABLE) are muxed to the PON
+	 * block by the bootloader.  The Airoha pinctrl driver resets the SCU
+	 * IOMUX registers at probe and writes 0 (GPIO mode) to them, so without
+	 * this state the PON MAC loses TX_DISABLE and the ONU never reaches
+	 * registration (no carrier, so no PPPoE).
+	 */
+	pon_pins: pon-pins {
+		mux {
+			function = "pon";
+			groups = "pon";
+		};
+	};
+
 	mdio_pins: mdio-pins {
 		mux {
 			function = "mdio";
@@ -342,6 +356,9 @@
 };
 
 &xpon_mac {
+	/* Re-mux the PON pins after the pinctrl driver reset the SCU IOMUX. */
+	pinctrl-names = "default";
+	pinctrl-0 = <&pon_pins>;
 	optical-front-end = <&hg5585f_bosa>;
 	data-path = <&gdm2>;
 	nvmem-cells = <&fiberhome_pon_serial>;
