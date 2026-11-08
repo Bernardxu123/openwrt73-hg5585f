@@ -46,7 +46,8 @@ apply_radio() {
 }
 
 apply_radio radio0 2g 11 HE20 "$ssid2g"
-apply_radio radio1 5g 36 HE160 "$ssid5g"
+# ch36/HE160 is the side AP's channel; stay on ch149/HE80 like the vendor image.
+apply_radio radio1 5g 149 HE80 "$ssid5g"
 
 uci -q commit wireless
 exit 0

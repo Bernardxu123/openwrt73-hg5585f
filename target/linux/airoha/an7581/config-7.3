@@ -484,9 +484,18 @@ CONFIG_FRAME_WARN=2048
 CONFIG_NF_CONNTRACK_EVENTS=y
 CONFIG_NF_CONNTRACK_CHAIN_EVENTS=y
 
-# Software flow offload: enabled in the kernel, runtime default stays 0/0
-# so the A/B test can be done with uci alone.
+# Software flow offload: enabled in the kernel; runtime defaults to software
+# offload on (flow_offloading=1, hw=0) like the vendor image, and the A/B test
+# is done with uci alone.
 CONFIG_NF_FLOW_TABLE=y
 CONFIG_NF_FLOW_TABLE_INET=y
 CONFIG_NF_FLOW_TABLE_PROCFS=y
 CONFIG_NFT_FLOW_OFFLOAD=y
+
+# BBR congestion control: kmod-tcp-bbr provides the module, the symbol is also
+# set here so a stale kmod selection cannot silently ship without tcp_bbr.ko.
+CONFIG_TCP_CONG_BBR=m
+
+# schedutil is what the vendor image uses (500 MHz - 1.2 GHz); the kernel
+# default remained "performance" without it.
+CONFIG_CPU_FREQ_GOV_SCHEDUTIL=y

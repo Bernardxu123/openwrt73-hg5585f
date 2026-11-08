@@ -1,0 +1,36 @@
+#!/bin/sh
+# PPPoE WAN from a 0600 provisioning file.
+#
+#   /etc/wan-cfg
+#   WAN_USER=...
+#   WAN_PASS=...
+#
+# Without that file the stock "wan on pon0 via DHCP" config is kept, which
+# simply never gets an address on this line - the safe default for a public
+# repository.
+
+[ -f /etc/wan-cfg ] || exit 0
+
+. /etc/wan-cfg
+
+[ -n "$WAN_USER" ] || exit 0
+[ -n "$WAN_PASS" ] || exit 0
+
+[ "$(uci -q get network.wan.proto)" = 'pppoe' ] && exit 0
+
+uci -q set network.wan.proto='pppoe'
+uci -q set network.wan.device='pon0.995'
+uci -q set network.wan.username="$WAN_USER"
+uci -q set network.wan.password="$WAN_PASS"
+uci -q set network.wan.ipv6='1'
+# keep 1500 here: pppd negotiates 1492 itself, 1492 in uci would double-deduct
+uci -q set network.wan.mtu='1500'
+uci -q set network.wan.mru='1500'
+uci -q set network.wan.keepalive='5 5'
+uci -q set network.wan6.proto='dhcpv6'
+uci -q set network.wan6.device='@wan'
+uci -q set network.wan6.reqprefix='56'
+uci -q set network.wan6.reqaddress='try'
+uci -q commit network
+
+exit 0

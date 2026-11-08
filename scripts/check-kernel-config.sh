@@ -22,7 +22,7 @@ cfg="$(find build_dir -path '*/linux-7.3.1/.config' -print -quit 2>/dev/null || 
 echo "check-kernel-config: $cfg"
 grep -E '^(CONFIG_DEBUG_INFO|CONFIG_CGROUPS|CONFIG_CGROUP_BPF|CONFIG_KPROBES|CONFIG_TRACEPOINTS|CONFIG_NETKIT|CONFIG_FRAME_WARN|CONFIG_FUNCTION_TRACER|CONFIG_QUEUED_SPINLOCKS_TRACE_CONTENDED_RELEASE)' "$cfg" || true
 echo '--- netfilter (informational only, kmod fragments merge later) ---'
-grep -E '^(CONFIG_NF_TABLES|CONFIG_NF_CONNTRACK_EVENTS|CONFIG_NF_CONNTRACK_CHAIN_EVENTS|CONFIG_NF_FLOW_TABLE|CONFIG_NFT_FLOW_OFFLOAD)' "$cfg" || echo '(absent at this stage, expected)'
+grep -E '^(CONFIG_NF_TABLES|CONFIG_NF_CONNTRACK_EVENTS|CONFIG_NF_CONNTRACK_CHAIN_EVENTS|CONFIG_NF_FLOW_TABLE|CONFIG_NFT_FLOW_OFFLOAD|CONFIG_TCP_CONG_BBR)' "$cfg" || echo '(absent at this stage, expected)'
 
 fail=0
 for sym in \
@@ -32,7 +32,9 @@ for sym in \
 	'CONFIG_KPROBES' \
 	'CONFIG_TRACEPOINTS' \
 	'CONFIG_NETKIT' \
-	'CONFIG_CGROUP_BPF'
+	'CONFIG_CGROUP_BPF' \
+	'CONFIG_NET_SCH_FQ_CODEL' \
+	'CONFIG_CPU_FREQ_GOV_SCHEDUTIL'
 do
 	grep -qx "${sym}=y" "$cfg" || { echo "MISSING: ${sym}=y" >&2; fail=1; }
 done

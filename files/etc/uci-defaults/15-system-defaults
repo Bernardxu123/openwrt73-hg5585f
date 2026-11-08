@@ -1,0 +1,43 @@
+#!/bin/sh
+# Household defaults that are safe to apply on the first boot and on every
+# upgrade: they only touch values that are still the OpenWrt defaults.
+#
+# Nothing identifying lives here, and every value is guarded so a
+# keep-config upgrade keeps whatever the user already chose.
+
+. /lib/functions.sh
+
+# ---- hostname: replace only the stock "OpenWrt" -------------------------
+cur_hostname=$(uci -q get system.@system[0].hostname)
+case "$cur_hostname" in
+	''|OpenWrt|openwrt)
+		case "$(board_name)" in
+			fiberhome,hg5585f-cu) hn='cu-hg5585f' ;;
+			fiberhome,hg5585f-ct) hn='ct-hg5585f' ;;
+			*) hn='hg5585f' ;;
+		esac
+		uci -q set system.@system[0].hostname="$hn"
+		;;
+esac
+
+uci -q set system.@system[0].timezone='CST-8'
+uci -q set system.@system[0].zonename='Asia/Shanghai'
+
+# ---- NTP: only seed when no server has been configured yet --------------
+[ -n "$(uci -q get system.ntp.server)" ] || {
+	uci -q set system.ntp.enabled='1'
+	uci -q add_list system.ntp.server='ntp.aliyun.com'
+	uci -q add_list system.ntp.server='cn.pool.ntp.org'
+	uci -q add_list system.ntp.server='time.cloudflare.com'
+}
+uci -q commit system
+
+# ---- firewall: software flow offload on, hardware off -------------------
+# The vendor image runs software offload too. On this mainline kernel the
+# nft flowtable has no vendor PPE behind it, so the 600 Mbps trap from the
+# QWRT 7.3 kernel does not apply; keep hardware offload off.
+uci -q set firewall.@defaults[0].flow_offloading='1'
+uci -q set firewall.@defaults[0].flow_offloading_hw='0'
+uci -q commit firewall
+
+exit 0

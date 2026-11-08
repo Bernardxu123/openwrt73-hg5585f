@@ -146,6 +146,25 @@ jobs:
           [ "$rec" = 1 ] || { echo "expected exactly 1 recovery image" >&2; exit 1; }
           [ "$left" = 0 ] || { echo "untagged images left in the output dir" >&2; ls -1 ./*.itb; exit 1; }
 
+      # The feature set has to be inside the image, not only selected in the
+      # config: b52 shipped without tcp_bbr.ko because nothing checked it.
+      - name: Verify feature packages in the image
+        if: success()
+        run: |
+          set -e
+          root=$(find build_dir -maxdepth 3 -type d -name 'root-*' -path '*/target-*/*' | head -n1)
+          kern=$(find build_dir -maxdepth 3 -type d -name 'linux-7.3*' | head -n1)
+          echo "rootfs=$root"
+          echo "kernel=$kern"
+          [ -n "$root" ] || { echo 'rootfs dir not found' >&2; exit 1; }
+          [ -n "$kern" ] || { echo 'kernel build dir not found' >&2; exit 1; }
+          [ -x "$root/usr/bin/honk-core" ] || { echo 'honk-core missing from rootfs' >&2; exit 1; }
+          [ -f "$root/usr/lib/ddns/update_cloudflare.sh" ] || { echo 'ddns-scripts-cloudflare provider missing' >&2; exit 1; }
+          [ -f "$kern/net/ipv4/tcp_bbr.ko" ] || { echo 'tcp_bbr.ko missing (kmod-tcp-bbr not built)' >&2; exit 1; }
+          ls "$root"/lib/modules/*/sch_ingress.ko >/dev/null || { echo 'sch_ingress.ko missing' >&2; exit 1; }
+          ls "$root"/lib/modules/*/cls_bpf.ko >/dev/null || { echo 'cls_bpf.ko missing' >&2; exit 1; }
+          echo 'feature check: OK'
+
       - name: Collect artifacts
         if: always()
         uses: actions/upload-artifact@v4

@@ -4,7 +4,8 @@
 一条命令产出一套可刷的 `sysupgrade.itb` / `recovery.itb`，目标是**用全开源组件替换厂商 QWRT 固件**，
 并把厂商固件里缺失的能力（NAT1 / FullCone）补回来。
 
-当前产物：`fw-20261107-b49-ct`、`fw-20261107-b49-cu`（OpenWrt SNAPSHOT `r0-0c9a73e`，内核 **7.3.1**）。
+当前产物：`fw-20261107-b52-ct`、`fw-20261107-b52-cu`（OpenWrt SNAPSHOT `r0-ef96b28`，内核 **7.3.1**）。
+b52 已在 CU 上完成 **PON 注册 → PPPoE 拨号 → IPv6 /60 → NAT1** 全链路实测（详见 §6）。
 
 > **本分支 `honk` 是仓库默认分支，也是构建与发版分支**：`git clone` 下来的就是生产代码，
 > 推送到本分支会触发 ct/cu 双机型 CI 并发布预发布包。
@@ -165,11 +166,16 @@ CONFIG_DEBUG_INFO_BTF / CONFIG_CGROUPS / CONFIG_CGROUP_BPF / CONFIG_KPROBES / CO
 | 项 | CU（已刷） | CT |
 |---|---|---|
 | 内核 | `7.3.1` ✅ | 待刷（仍跑 QWRT 生产） |
-| 系统 | `r0-0c9a73e` ✅ | — |
-| NAT1 | `nft_fullcone` 已加载，2 条 fullcone 规则 ✅ | — |
-| 软件卸载 | flowtable 已建（`br-lan` + `pon0.995`）✅ | — |
-| PON | `ponctl`：`active_mode=epon-10g-1g`，`lifecycle=wait-line-sync` ✅ | — |
-| 拨号 | PPPoE over `pon0.995` 已配置，待接光纤实测 | — |
+| 系统 | `r0-ef96b28` ✅ | — |
+| NAT1 | `nft_fullcone` 已加载，2 条 fullcone 规则；同一 UDP 端口对 3 个 STUN 服务器映射一致 ✅ | — |
+| PON | `ponctl`：`lifecycle=operational`、`mpcp_state=registered`、`llid=164`、`register_acks=1` ✅ | — |
+| 拨号 | PPPoE over `pon0.995`：`100.92.x.x` / peer、MTU 1492 ✅ | — |
+| IPv6 | `wan6` 拿到 /60 PD，LAN 下发 `2408:820c:8268:b270::/60` ✅ | — |
+| 吞吐 | 6 并发流聚合 **900 Mbps**（12 s / 1.29 GB），CPU 基本空闲 ✅ | — |
+| 待验证（b53） | BBR 默认、软件卸载默认开、schedutil 500–1200 MHz、状态页频率/温度 | — |
+
+> b53 追加：`kmod-tcp-bbr` + `sysctl` 默认 BBR、`ddns-scripts-cloudflare`、软件流量卸载默认开、
+> schedutil 调度器（与厂商一致）、状态页 Architecture 行显示频率与温度。
 
 刷机前请确认镜像 DTS 与机型一致（`ct` 镜像含 `fiberhome,hg5585f-ct`，`cu` 镜像含 `fiberhome,hg5585f-cu`）。
 

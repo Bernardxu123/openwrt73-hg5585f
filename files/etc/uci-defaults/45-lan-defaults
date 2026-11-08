@@ -1,0 +1,67 @@
+#!/bin/sh
+# LAN defaults for the household network.
+#
+# The 23 static leases and their *.lan names are NOT stored in this public
+# repository. They come from /etc/lanspec (0600), one "name mac ip" per line:
+#
+#   pc_eth 80:fa:5b:90:d1:c0 192.168.31.218
+#   xiaomi_ap a4:a9:30:81:e9:2e 192.168.31.138
+#   ...
+#
+# Without the file only the LAN address and DHCP server settings are applied.
+
+# ---- LAN addressing: replace only the stock 192.168.1.1 ----------------
+case "$(uci -q get network.lan.ipaddr)" in
+	''|192.168.1.1|192.168.1.1/24)
+		uci -q set network.lan.ipaddr='192.168.31.1/24'
+		;;
+esac
+uci -q set network.lan.ip6assign='60'
+uci -q commit network
+
+# ---- DHCP server: same behaviour as the vendor image -------------------
+uci -q set dhcp.lan.interface='lan'
+uci -q set dhcp.lan.dhcpv4='server'
+uci -q set dhcp.lan.dhcpv6='server'
+uci -q set dhcp.lan.ra='server'
+if [ -z "$(uci -q get dhcp.lan.ra_flags)" ]; then
+	uci -q add_list dhcp.lan.ra_flags='managed-config'
+	uci -q add_list dhcp.lan.ra_flags='other-config'
+fi
+uci -q commit dhcp
+
+[ -f /etc/lanspec ] || exit 0
+
+# ---- static leases + /etc/hosts names ----------------------------------
+tmp_hosts="/tmp/lanspec-hosts.$$"
+: > "$tmp_hosts"
+
+while read -r name mac ip; do
+	case "$name" in
+		''|'#'*) continue ;;
+	esac
+	[ -n "$mac" ] && [ -n "$ip" ] || continue
+
+	printf '%s\t%s %s\n' "$ip" "$name" "$name.lan" >> "$tmp_hosts"
+
+	# skip MACs that already have a reservation (keep-config upgrades)
+	uci -q show dhcp | grep -q "mac='$mac'" && continue
+
+	uci -q add dhcp host >/dev/null
+	uci -q set "dhcp.@host[-1].name=$name"
+	uci -q set "dhcp.@host[-1].mac=$mac"
+	uci -q set "dhcp.@host[-1].ip=$ip"
+done < /etc/lanspec
+
+uci -q commit dhcp
+
+# replace the previous block instead of appending a second one
+sed -i '/# --- lanspec names ---/,$d' /etc/hosts
+[ -s /etc/hosts ] && [ -n "$(tail -c1 /etc/hosts)" ] && echo >> /etc/hosts
+{
+	echo '# --- lanspec names ---'
+	cat "$tmp_hosts"
+} >> /etc/hosts
+
+rm -f "$tmp_hosts"
+exit 0
