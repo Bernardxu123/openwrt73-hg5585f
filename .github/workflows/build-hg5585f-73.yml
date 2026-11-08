@@ -159,7 +159,10 @@ jobs:
           [ -n "$root" ] || { echo 'rootfs dir not found' >&2; exit 1; }
           [ -n "$kern" ] || { echo 'kernel build dir not found' >&2; exit 1; }
           [ -x "$root/usr/bin/honk-core" ] || { echo 'honk-core missing from rootfs' >&2; exit 1; }
-          [ -f "$root/usr/lib/ddns/update_cloudflare.sh" ] || { echo 'ddns-scripts-cloudflare provider missing' >&2; exit 1; }
+          [ -f "$root/usr/lib/ddns/update_cloudflare_com_v4.sh" ] || { echo 'ddns-scripts-cloudflare provider missing' >&2; exit 1; }
+          [ -f "$root/usr/share/ddns/default/cloudflare.com-v4.json" ] || { echo 'cloudflare service definition missing' >&2; exit 1; }
+          [ -x "$root/usr/sbin/pon-debug" ] || { echo 'pon-debug missing from rootfs' >&2; exit 1; }
+          [ -x "$root/usr/sbin/bridge" ] || { echo 'ip-bridge (bridge tool) missing' >&2; exit 1; }
           [ -f "$kern/net/ipv4/tcp_bbr.ko" ] || { echo 'tcp_bbr.ko missing (kmod-tcp-bbr not built)' >&2; exit 1; }
           ls "$root"/lib/modules/*/sch_ingress.ko >/dev/null || { echo 'sch_ingress.ko missing' >&2; exit 1; }
           ls "$root"/lib/modules/*/cls_bpf.ko >/dev/null || { echo 'cls_bpf.ko missing' >&2; exit 1; }
